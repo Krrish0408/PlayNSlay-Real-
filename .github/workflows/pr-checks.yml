@@ -1,0 +1,83 @@
+name: Pull Request Verification CI
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-quality-and-security:
+    name: PR Checks (Lockfile, Lint, Types, Tests, Security, Build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      NODE_ENV: test
+      PAYMENT_WEBHOOK_SECRET: pr_ci_webhook_secret_key_v1
+      SESSION_SECRET: pr_ci_session_secret_for_pipeline_testing_32chars!
+      CORS_ALLOWED_ORIGINS: "http://localhost:5000,http://127.0.0.1:5000,http://localhost:3000,http://127.0.0.1:3000"
+
+    steps:
+      - name: 1. Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 2. Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: 3. Install Dependencies from Lockfile
+        run: npm ci
+
+      - name: 4. Repository & Code Hygiene Linting
+        run: npm run lint
+
+      - name: 5. Static Type Checking
+        run: npm run check
+
+      - name: 6. Security Vulnerability Scan (npm audit)
+        run: npm audit --audit-level=high
+
+      - name: 7. Layer 1: Unit Tests (Pricing, Validation, Authorization)
+        run: npm run test:unit
+
+      - name: 8. Layer 2: Integration Tests (PostgreSQL, Sessions, Transactions)
+        run: npm run test:integration
+
+      - name: 9. Layer 3: Security & Authorization Hardening Tests
+        run: npm run test:security
+
+      - name: 10. Layer 4: Concurrency & Idempotency Tests
+        run: npm run test:concurrency
+
+      - name: 11. Production Build Verification
+        run: npm run build
+
+      - name: 12. Client Bundle Secret Scan
+        run: |
+          echo "Scanning production client bundle for leaked secrets or connection strings..."
+          if grep -rn -E "(SESSION_SECRET|DATABASE_URL|CLOUDINARY_API_SECRET|INITIAL_ADMIN_BOOTSTRAP_TOKEN)" dist/public/; then
+            echo "FATAL: Leaked secrets detected in client bundle!"
+            exit 1
+          fi
+          echo "PASS: Zero secrets detected in production client bundle."
+
+      - name: 13. Deprecated Subsystem Exclusion Check
+        run: |
+          echo "Verifying deprecated inventory subsystem remains decommissioned..."
+          npx tsx --eval '
+            import { api } from "./shared/routes.ts";
+            if ((api as any).inventory || (api as any).booking_items) {
+              console.error("FATAL: Deprecated schema re-introduced!");
+              process.exit(1);
+            }
+            console.log("PASS: Deprecated subsystems remain decommissioned.");
+          '
+
+      - name: 14. Database Migration Safety Audit
+        run: npm run db:migrate:check-safety

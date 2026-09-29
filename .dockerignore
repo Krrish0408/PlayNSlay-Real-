@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.github
+.env
+.env.*
+!.env.example
+backups/*
+!backups/.gitkeep
+test
+*.md
+*.log
+.DS_Store
+.next
+.replit

@@ -1,0 +1,2 @@
+-- Migration: 0005_remove_deprecated_inventory (Down)
+-- Description: Inventory subsystem is permanently decommissioned and not restored on rollback.

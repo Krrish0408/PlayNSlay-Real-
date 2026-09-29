@@ -1,0 +1,82 @@
+name: Production Testing Strategy CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-verify:
+    name: Build, Typecheck, and Test Layers
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      NODE_ENV: test
+      PAYMENT_WEBHOOK_SECRET: prod_webhook_secret_key_v1
+      SESSION_SECRET: test_session_secret_for_ci_pipeline_32chars_long!
+      CORS_ALLOWED_ORIGINS: "http://localhost:5000,http://127.0.0.1:5000,http://localhost:3000,http://127.0.0.1:3000"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Code Hygiene & Repository Linting
+        run: npm run lint
+
+      - name: Static Type Checking
+        run: npm run check
+
+      - name: Database Migration Safety Check
+        run: npm run db:migrate:check-safety
+
+      - name: Security Vulnerability Scan
+        run: npm audit --audit-level=high
+
+      - name: Production Build Verification
+        run: npm run build
+
+      - name: Layer 1: Unit Tests (Pricing, Validation, Authorization, State Transitions)
+        run: npm run test:unit
+
+      - name: Layer 2: Integration Tests (PostgreSQL, Sessions, Booking Transactions, Payments)
+        run: npm run test:integration
+
+      - name: Layer 3 & 4: Security & API Hardening Tests (IDOR, CSRF, CORS, Rate Limiting, Auth)
+        run: npm run test:security
+
+      - name: Layer 5: Concurrency & Idempotency Tests (Simultaneous Booking/Session, Webhook Deduplication)
+        run: npm run test:concurrency
+
+      - name: Layer 6: E2E Full Lifecycle Tests (Register -> Verify -> Login -> Book -> Pay -> Cancel -> Check-in -> Timer -> Admin)
+        run: npm run test:e2e
+
+      - name: Full Production Testing Strategy Suite
+        run: npm run test:strategy
+
+      - name: Deprecated Subsystem Absence Verification
+        run: |
+          echo "Verifying deprecated subsystem route schemas remain absent..."
+          npx tsx --eval '
+            import { api } from "./shared/routes.ts";
+            if ((api as any).inventory || (api as any).booking_items) {
+              console.error("FATAL: Deprecated schema re-introduced!");
+              process.exit(1);
+            }
+            console.log("PASS: Deprecated subsystems remain safely decommissioned.");
+          '

@@ -1,0 +1,100 @@
+You are a professional full-stack software developer.
+
+I want you to GENERATE THE COMPLETE SOURCE CODE of my application in ONE PROJECT FOLDER,
+so that I can simply OPEN THE FOLDER and RUN THE APP without missing anything.
+
+IMPORTANT RULES (Follow strictly):
+1. Give FULL SOURCE CODE (no pseudo code, no skipped files).
+2. All files must be included inside ONE folder.
+3. The project must be RUNNABLE immediately after opening (only basic install commands allowed).
+4. Include FRONTEND, BACKEND, and DATABASE integration.
+5. Do NOT explain too much — focus on delivering working code.
+6. Use clear folder structure and comments inside code.
+
+-----------------------------------
+APPLICATION DETAILS
+-----------------------------------
+
+App Name: Play N' Slay – Gaming Cafe Management App
+
+Tech Stack:
+- Frontend: HTML, CSS, JavaScript (or React if better)
+- Backend: Node.js + Express
+- Database: SQLite (or MongoDB with local setup)
+- Authentication: Simple login (Admin / Employee)
+- Hosting: Replit compatible
+
+-----------------------------------
+FEATURES REQUIRED
+-----------------------------------
+
+1. CUSTOMER PANEL
+- Book gaming slot
+- Select:
+  - Game Type (PS5, PS4, PC, VR, Racing Simulator, XBOX)
+  - Date
+  - Time Slot
+  - Duration (1 hour, 2 hour, etc.)
+  - Player Count
+- Show price automatically
+- Confirm booking
+
+2. EMPLOYEE PANEL
+- Login system
+- Add walk-in (offline) customers
+- Start & stop game session
+- Auto calculate bill based on time
+- Add snacks/items to bill
+- Generate final bill
+
+3. ADMIN PANEL
+- Dashboard
+- Total earnings (daily / monthly)
+- Total bookings
+- Active sessions
+- Manage prices
+- Manage game types
+- Manage employees
+
+4. DATABASE
+- Tables for:
+  - Users (admin / employee)
+  - Customers
+  - Bookings
+  - Game sessions
+  - Pricing
+  - Snacks / items
+- Use real database queries (no dummy data)
+
+-----------------------------------
+PROJECT STRUCTURE (MANDATORY)
+-----------------------------------
+
+/play-n-slay
+ ├── backend
+ │    ├── server.js
+ │    ├── routes
+ │    ├── controllers
+ │    ├── database
+ │    └── package.json
+ ├── frontend
+ │    ├── index.html
+ │    ├── login.html
+ │    ├── admin.html
+ │    ├── employee.html
+ │    ├── css
+ │    └── js
+ ├── README.md
+ └── .env (if required)
+
+-----------------------------------
+FINAL OUTPUT RULES
+-----------------------------------
+- Give ALL FILE CONTENTS.
+- No missing dependencies.
+- App must run using:
+  npm install
+  npm start
+- Ensure code is clean, readable, and production-ready.
+
+Start generating the project now.

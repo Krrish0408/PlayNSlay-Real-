@@ -1,0 +1,152 @@
+ULL DETAILED PROMPT — Gaming Lounge Management App
+
+Build a full-stack Gaming Lounge Management & Booking Web App named “Play N Slay Gaming Lounge” using HTML, CSS, JavaScript, and Node.js with Express (or Python Flask if preferred).
+
+The app must allow the owner/admin to fully customize game types, hourly prices, and availability from the admin panel.
+
+👤 USER PANEL (Customer Booking)
+
+Create a booking form with:
+
+Game Type Dropdown
+This dropdown must be loaded dynamically from the admin database.
+
+Time Selection
+
+Start Time
+
+End Time
+
+Duration Selection
+
+Auto calculated from time difference OR manual hour selection.
+
+Player Count
+
+Auto Price Calculation
+
+Price = (Admin Set Hourly Price × Duration)
+
+Price updates instantly when game type or time changes.
+
+Book Slot Button
+
+After booking:
+
+Generate unique Booking ID
+
+Show booking confirmation screen
+
+Save booking in database with status "Pending"
+
+🛠 ADMIN PANEL (FULL CONTROL)
+
+Admin login system.
+
+Admin can manage:
+🔧 Game Type Management
+
+Admin can:
+
+Add new game type (ex: PS5, VR, Racing Sim, MetaShot, IB Cricket etc)
+
+Set hourly price
+
+Set max players
+
+Set availability (ON/OFF)
+
+Edit game type
+
+Delete game type
+
+Example:
+| Game Type | Price per Hour | Max Players | Status |
+
+📅 Booking Management
+
+Admin can:
+
+View all bookings
+
+Filter by date / game type
+
+Approve / Cancel booking
+
+See total earnings per day
+
+Export bookings as Excel / CSV
+
+💰 Price Logic
+
+Price must calculate as:
+
+Total Price = Hourly Price × Hours × Player Count (optional multiplier)
+
+
+Admin can choose:
+
+Price per player or flat price.
+
+⏱ LIVE TIMER SYSTEM
+
+Admin can start timer for any booking:
+
+Countdown display
+
+Auto stop when time ends
+
+Auto calculate final bill
+
+🎨 UI DESIGN
+
+Dark gaming theme
+
+Neon blue, purple, green accents
+
+Card layout
+
+Mobile responsive
+
+Dashboard charts
+
+⚙️ DATABASE
+
+Use SQLite / MongoDB / JSON.
+
+Tables:
+
+Users
+
+GameTypes
+
+Bookings
+
+AdminSettings
+
+🔐 SECURITY
+
+Password hashing
+
+Form validation
+
+Admin protected routes
+
+📁 PROJECT STRUCTURE
+/public
+  index.html
+  admin.html
+  css/style.css
+  js/app.js
+/server.js
+/database.db
+
+🚀 EXTRA
+
+Promo code discounts
+
+Membership pricing
+
+Weekend special pricing
+
+Notification popup

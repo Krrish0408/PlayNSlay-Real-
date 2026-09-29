@@ -1,0 +1,38 @@
+{
+  "backupId": "backup_1790630558765_d349628e",
+  "timestamp": "2026-09-28T21:22:39.378Z",
+  "environment": "development",
+  "schemaVersion": "1.0.0",
+  "tables": [
+    "schema_migrations",
+    "settings",
+    "users",
+    "game_types",
+    "stations",
+    "games",
+    "bookings",
+    "audit_logs",
+    "user_sessions",
+    "idempotency_keys"
+  ],
+  "recordCounts": {
+    "schema_migrations": 0,
+    "settings": 0,
+    "users": 0,
+    "game_types": 0,
+    "stations": 0,
+    "games": 0,
+    "bookings": 0,
+    "audit_logs": 0,
+    "user_sessions": 0,
+    "idempotency_keys": 0
+  },
+  "plaintextSha256": "8e7609c41f2d05ede228c5f203f5d4c3ea50ca52ebf1c7609db4db1b300f1582",
+  "ciphertextSha256": "8c0bf1520758287b5fc82211412699bacd78b88fbb0965e9539910a3fc25a785",
+  "ivHex": "b65a540df15b9f9d11701253f5c66d8f",
+  "authTagHex": "10da581eb8899a6e2eb3765df3af1e7f",
+  "uncompressedSizeBytes": 135,
+  "encryptedSizeBytes": 145,
+  "verified": true,
+  "verifiedAt": "2026-09-28T21:22:39.385Z"
+}
