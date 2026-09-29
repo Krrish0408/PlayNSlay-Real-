@@ -44,14 +44,26 @@
   * {
     @apply border-border;
   }
+  html {
+    @apply scroll-smooth;
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    overflow-x: hidden;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
     background-image: 
       radial-gradient(circle at 50% 0%, hsl(280, 100%, 60%, 0.05), transparent 60%),
       linear-gradient(to bottom, transparent, hsl(240, 25%, 6%));
   }
   
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     @apply tracking-wide uppercase text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-primary bg-[length:200%_auto] animate-gradient;
@@ -81,6 +93,37 @@
   
   .card-gradient {
     @apply bg-gradient-to-b from-card to-card/90 border border-primary/20 hover:border-primary/50 transition-colors duration-300;
+  }
+
+  /* Mobile Safe Area & Touch Utilities */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .pt-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Controlled horizontal scroll container for tables that must not break mobile viewport */
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

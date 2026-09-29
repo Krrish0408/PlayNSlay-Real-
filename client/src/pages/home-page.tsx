@@ -96,7 +96,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-black/40 py-8 px-4">
+      <footer className="border-t border-white/10 bg-black/40 py-8 pb-24 md:pb-8 px-4">
         <div className="container mx-auto max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <span className="font-display font-bold text-foreground tracking-wider">PLAY N'<span className="text-primary">SLAY</span></span>

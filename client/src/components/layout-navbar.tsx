@@ -36,10 +36,10 @@ export function Navbar() {
       <div className="container mx-auto h-full px-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group cursor-pointer" onClick={() => setIsMobileMenuOpen(false)}>
-          <div className="h-9 w-9 sm:h-10 sm:w-10 overflow-hidden rounded-lg border border-primary/50 group-hover:shadow-[0_0_15px_rgba(0,243,255,0.5)] transition-all shrink-0">
+          <div className="h-8 w-8 sm:h-10 sm:w-10 overflow-hidden rounded-lg border border-primary/50 group-hover:shadow-[0_0_15px_rgba(0,243,255,0.5)] transition-all shrink-0">
             <img src={typeof logoImg === 'string' ? logoImg : (logoImg as any)?.src || ""} alt="Play N' Slay Logo" className="h-full w-full object-cover" />
           </div>
-          <span className="text-lg sm:text-xl font-bold font-display tracking-wider group-hover:text-primary transition-colors">
+          <span className="text-base sm:text-xl font-bold font-display tracking-wider group-hover:text-primary transition-colors">
             PLAY N'<span className="text-primary">SLAY</span>
           </span>
         </Link>
@@ -55,7 +55,7 @@ export function Navbar() {
           </Link>
           {!user ? (
             <Link href="/auth">
-              <Button variant="default" className="bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-all">
+              <Button variant="default" className="bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-all font-semibold">
                 Login / Join
               </Button>
             </Link>
@@ -79,7 +79,7 @@ export function Navbar() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-primary/30 p-0 overflow-hidden hover:shadow-[0_0_10px_rgba(0,243,255,0.3)] transition-all">
+                  <Button variant="ghost" aria-label="Open User Account Menu" className="relative h-10 w-10 rounded-full border border-primary/30 p-0 overflow-hidden hover:shadow-[0_0_10px_rgba(0,243,255,0.3)] transition-all">
                     <Avatar className="h-full w-full">
                       {user.avatarUrl ? (
                         <AvatarImage src={user.avatarUrl} alt={user.username} className="object-cover" />
@@ -100,19 +100,19 @@ export function Navbar() {
                     </div>
                   </div>
                   <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem onClick={() => setIsProfileOpen(true)} className="cursor-pointer flex items-center">
+                  <DropdownMenuItem onClick={() => setIsProfileOpen(true)} className="cursor-pointer flex items-center min-h-[40px]">
                     <Settings className="mr-2 h-4 w-4 text-primary" />
                     <span>Profile & Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="cursor-pointer flex items-center">
+                    <Link href="/dashboard" className="cursor-pointer flex items-center min-h-[40px]">
                       <UserIcon className="mr-2 h-4 w-4" />
                       <span>My Bookings</span>
                     </Link>
                   </DropdownMenuItem>
                   {user.role === 'employee' || user.role === 'admin' ? (
                     <DropdownMenuItem asChild>
-                      <Link href="/employee" className="cursor-pointer flex items-center">
+                      <Link href="/employee" className="cursor-pointer flex items-center min-h-[40px]">
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         <span>Employee Panel</span>
                       </Link>
@@ -120,14 +120,14 @@ export function Navbar() {
                   ) : null}
                   {user.role === 'admin' && (
                     <DropdownMenuItem asChild>
-                      <Link href="/admin" className="cursor-pointer flex items-center">
+                      <Link href="/admin" className="cursor-pointer flex items-center min-h-[40px]">
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         <span>Admin Dashboard</span>
                       </Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem onClick={handleLogout} className="text-red-400 focus:text-red-400 focus:bg-red-400/10 cursor-pointer">
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-400 focus:text-red-400 focus:bg-red-400/10 cursor-pointer min-h-[40px]">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>
@@ -138,11 +138,12 @@ export function Navbar() {
         </div>
 
         {/* Mobile Nav Toggle & User Quick Avatar */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex md:hidden items-center gap-1.5 sm:gap-2">
           {user && (
             <button
               onClick={() => setIsProfileOpen(true)}
-              className="relative h-9 w-9 rounded-full border border-primary/30 overflow-hidden"
+              className="relative h-9 w-9 rounded-full border border-primary/30 overflow-hidden touch-target flex items-center justify-center"
+              aria-label="Open User Profile"
               title="Profile & Settings"
             >
               <Avatar className="h-full w-full">
@@ -160,8 +161,10 @@ export function Navbar() {
             variant="ghost"
             size="icon"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="h-10 w-10 text-foreground hover:bg-white/10"
-            aria-label="Toggle Navigation Menu"
+            className="h-11 w-11 text-foreground hover:bg-white/10 touch-target flex items-center justify-center"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-navigation-menu"
+            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
           >
             {isMobileMenuOpen ? <X className="h-6 w-6 text-primary" /> : <Menu className="h-6 w-6" />}
           </Button>
@@ -170,22 +173,25 @@ export function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-b border-white/10 bg-background/95 backdrop-blur-xl px-4 py-4 space-y-2 shadow-2xl animate-in slide-in-from-top-2 duration-200">
+        <div
+          id="mobile-navigation-menu"
+          className="md:hidden border-b border-white/10 bg-background/95 backdrop-blur-xl px-4 py-4 space-y-1.5 shadow-2xl animate-in slide-in-from-top-2 duration-200"
+        >
           <Link
             href="/games"
             onClick={() => setIsMobileMenuOpen(false)}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
               location === '/games' ? 'bg-primary/10 text-primary font-bold' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
             }`}
           >
-            <Gamepad2 className="w-4 h-4 text-primary" />
+            <Gamepad2 className="w-5 h-5 text-primary shrink-0" />
             <span>Games Catalog</span>
           </Link>
 
           <Link
             href="/contact"
             onClick={() => setIsMobileMenuOpen(false)}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
               location === '/contact' ? 'bg-primary/10 text-primary font-bold' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
             }`}
           >
@@ -196,11 +202,11 @@ export function Navbar() {
             <Link
               href="/dashboard"
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                 location === '/dashboard' ? 'bg-primary/10 text-primary font-bold' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
               }`}
             >
-              <UserIcon className="w-4 h-4 text-secondary" />
+              <UserIcon className="w-5 h-5 text-secondary shrink-0" />
               <span>My Bookings</span>
             </Link>
           )}
@@ -209,11 +215,11 @@ export function Navbar() {
             <Link
               href="/admin"
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                 location.startsWith('/admin') ? 'bg-primary/15 text-primary font-bold' : 'text-primary hover:bg-primary/10'
               }`}
             >
-              <LayoutDashboard className="w-4 h-4" />
+              <LayoutDashboard className="w-5 h-5 shrink-0" />
               <span>Admin Command</span>
             </Link>
           )}
@@ -222,11 +228,11 @@ export function Navbar() {
             <Link
               href="/employee"
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                 location.startsWith('/employee') ? 'bg-secondary/15 text-secondary font-bold' : 'text-secondary hover:bg-secondary/10'
               }`}
             >
-              <LayoutDashboard className="w-4 h-4" />
+              <LayoutDashboard className="w-5 h-5 shrink-0" />
               <span>Staff Station</span>
             </Link>
           )}
@@ -237,9 +243,9 @@ export function Navbar() {
                 setIsProfileOpen(true);
                 setIsMobileMenuOpen(false);
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 text-left"
+              className="w-full flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 text-left min-h-[44px]"
             >
-              <Settings className="w-4 h-4 text-primary" />
+              <Settings className="w-5 h-5 text-primary shrink-0" />
               <span>Profile & Settings</span>
             </button>
           )}
@@ -247,7 +253,7 @@ export function Navbar() {
           <div className="pt-2 border-t border-white/10">
             {!user ? (
               <Link href="/auth" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button className="w-full bg-primary text-primary-foreground font-bold shadow-[0_0_15px_rgba(0,243,255,0.3)]">
+                <Button className="w-full h-11 bg-primary text-primary-foreground font-bold shadow-[0_0_15px_rgba(0,243,255,0.3)]">
                   Login / Join
                 </Button>
               </Link>
@@ -255,7 +261,7 @@ export function Navbar() {
               <Button
                 variant="outline"
                 onClick={handleLogout}
-                className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 justify-center"
+                className="w-full h-11 border-red-500/30 text-red-400 hover:bg-red-500/10 justify-center"
               >
                 <LogOut className="w-4 h-4 mr-2" /> Log out
               </Button>

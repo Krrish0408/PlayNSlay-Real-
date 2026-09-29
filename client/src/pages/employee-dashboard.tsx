@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/responsive/status-badge";
 
 interface EmployeeStats {
   dailyEntries: number;
@@ -129,12 +130,51 @@ export default function EmployeeDashboard() {
                 RECENT ACTIVITY
               </h2>
               <Link href="/employee/recent">
-                <Button variant="ghost" className="text-primary hover:bg-primary/10 p-0 h-auto">View All</Button>
+                <Button variant="ghost" className="text-primary hover:bg-primary/10 text-xs font-semibold px-2.5 h-8">View All</Button>
               </Link>
             </div>
             <Card className="bg-card/40 backdrop-blur-sm border-white/10 overflow-hidden">
               <CardContent className="p-0">
-                <div className="overflow-x-auto w-full">
+                {/* Mobile Card List (< md:) */}
+                <div className="md:hidden divide-y divide-white/5">
+                  {recentEntries.map((booking: any) => (
+                    <div key={booking.id} className="p-3.5 space-y-2.5 hover:bg-white/[0.02] transition-colors">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-sm text-foreground">{booking.user?.username || 'Guest'}</span>
+                        <StatusBadge status={booking.status} />
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>{booking.gameType?.name || 'General'}</span>
+                          {booking.station?.name && (
+                            <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary bg-primary/5">
+                              {booking.station.name}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="font-mono text-foreground font-semibold">
+                          {format(new Date(booking.startTime), "HH:mm")}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-white/5 text-xs">
+                        <span className="text-muted-foreground font-mono text-[11px]">{booking.bookingRef}</span>
+                        <span className="font-mono font-bold text-primary text-sm">
+                          ₹{(booking.totalPrice / 100).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {recentEntries.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground text-xs italic">
+                      No recent activity recorded by you yet.
+                    </div>
+                  )}
+                </div>
+
+                {/* Desktop Table View (md: and up) */}
+                <div className="hidden md:block overflow-x-auto w-full">
                   <Table>
                     <TableHeader className="bg-white/5">
                       <TableRow className="border-white/5 hover:bg-transparent">
@@ -167,18 +207,7 @@ export default function EmployeeDashboard() {
                             ₹{(booking.totalPrice / 100).toFixed(2)}
                           </TableCell>
                           <TableCell className="text-right">
-                            <Badge
-                              variant="outline"
-                              className={
-                                booking.status === "Approved" || booking.status === "Completed"
-                                  ? "text-xs bg-green-500/10 text-green-400 border-green-500/30 font-display"
-                                  : booking.status === "Pending"
-                                  ? "text-xs bg-yellow-500/10 text-yellow-400 border-yellow-500/30 font-display"
-                                  : "text-xs bg-red-500/10 text-red-400 border-red-500/30 font-display"
-                              }
-                            >
-                              {booking.status}
-                            </Badge>
+                            <StatusBadge status={booking.status} />
                           </TableCell>
                         </TableRow>
                       ))}

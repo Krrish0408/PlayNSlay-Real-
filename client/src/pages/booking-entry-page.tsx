@@ -197,28 +197,28 @@ export default function BookingEntryPage() {
 
 
   return (
-    <div className="container mx-auto p-6 space-y-8 max-w-5xl">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-8">
+    <div className="container mx-auto p-3 sm:p-6 space-y-6 sm:space-y-8 max-w-5xl pb-16">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+        <div className="space-y-6 sm:space-y-8">
           <Card className="bg-card/50 border-white/10 h-fit">
-            <CardHeader>
-              <CardTitle className="font-display text-2xl tracking-tight flex items-center gap-2">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="font-display text-xl sm:text-2xl tracking-tight flex items-center gap-2">
                 <Save className="w-5 h-5 text-primary" />
                 NEW BOOKING ENTRY
               </CardTitle>
-              <CardDescription>Record manual entries for offline customers.</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">Record manual entries for offline customers.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6 pt-0">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmitBooking)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmitBooking)} className="space-y-5 sm:space-y-6">
                   <FormField
                     control={form.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Customer Name</FormLabel>
+                        <FormLabel className="text-xs sm:text-sm">Customer Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter customer name" {...field} />
+                          <Input placeholder="Enter customer name" className="h-11 sm:h-12 bg-background/60 border-white/10 text-sm sm:text-base" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -587,77 +587,138 @@ export default function BookingEntryPage() {
           </Card>
         </div>
 
-        <Card className="bg-card/50 border-white/10">
-          <CardHeader>
-            <CardTitle className="font-display text-2xl tracking-tight flex items-center gap-2">
+        <Card className="bg-card/50 border-white/10 overflow-hidden">
+          <CardHeader className="p-4 sm:p-6 pb-3">
+            <CardTitle className="font-display text-xl sm:text-2xl tracking-tight flex items-center gap-2">
               <HistoryIcon className="w-5 h-5 text-secondary" />
               RECENT ENTRIES
             </CardTitle>
-            <CardDescription>Recently recorded offline and manual bookings.</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">Recently recorded offline and manual bookings.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-6 sm:pt-0">
             {bookingsLoading ? (
               <div className="flex justify-center p-8"><Loader2 className="animate-spin text-primary" /></div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Station</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">Invoice</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile Card List (< md:) */}
+                <div className="md:hidden divide-y divide-white/5">
                   {Array.isArray(bookings) && bookings.slice(0, 10).map((booking: any) => (
-                    <TableRow key={booking.id} className="border-white/10">
-                      <TableCell className="font-medium">{booking.user?.username || 'Guest'}</TableCell>
-                      <TableCell>
+                    <div key={booking.id} className="p-3.5 space-y-2 hover:bg-white/[0.02] transition-colors">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-sm text-foreground">{booking.user?.username || 'Guest'}</span>
+                        <span className="font-mono font-bold text-primary text-sm">
+                          ₹{(booking.totalPrice / 100).toFixed(2)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span>{booking.gameType?.name || (
-                            <span className="text-xs text-muted-foreground font-medium bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                            <span className="text-[10px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
                               No Category
                             </span>
                           )}</span>
                           {booking.station?.name && (
-                            <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary bg-primary/5">
+                            <Badge variant="outline" className="text-[9px] font-mono border-primary/30 text-primary bg-primary/5">
                               {booking.station.name}
                             </Badge>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {booking.gameTypeId
-                          ? `${format(new Date(booking.startTime), "HH:mm")} - ${format(new Date(booking.endTime), "HH:mm")}`
-                          : format(new Date(booking.startTime), "HH:mm")}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-primary">
-                        ₹{(booking.totalPrice / 100).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right">
+                        <span className="font-mono text-xs">
+                          {booking.gameTypeId
+                            ? `${format(new Date(booking.startTime), "HH:mm")} - ${format(new Date(booking.endTime), "HH:mm")}`
+                            : format(new Date(booking.startTime), "HH:mm")}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-end pt-1">
                         <Button
-                          variant="ghost"
-                          size="icon"
+                          variant="outline"
+                          size="sm"
                           onClick={() => {
                             setCurrentBooking(booking);
                             setShowInvoice(true);
                           }}
+                          className="h-8 px-2.5 text-xs border-white/10 hover:border-primary/50 gap-1 touch-target"
                         >
-                          <Printer className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                          <Printer className="w-3.5 h-3.5 text-primary" />
+                          <span>Invoice</span>
                         </Button>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </div>
                   ))}
                   {(!Array.isArray(bookings) || (bookings as any).length === 0) && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        No recent entries found.
-                      </TableCell>
-                    </TableRow>
+                    <div className="text-center py-8 text-muted-foreground text-xs italic">
+                      No recent entries found.
+                    </div>
                   )}
-                </TableBody>
-              </Table>
+                </div>
+
+                {/* Desktop Table View (md: and up) */}
+                <div className="hidden md:block overflow-x-auto w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-white/10">
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Station</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead className="text-right">Invoice</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {Array.isArray(bookings) && bookings.slice(0, 10).map((booking: any) => (
+                        <TableRow key={booking.id} className="border-white/10">
+                          <TableCell className="font-medium">{booking.user?.username || 'Guest'}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{booking.gameType?.name || (
+                                <span className="text-xs text-muted-foreground font-medium bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                                  No Category
+                                </span>
+                              )}</span>
+                              {booking.station?.name && (
+                                <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary bg-primary/5">
+                                  {booking.station.name}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {booking.gameTypeId
+                              ? `${format(new Date(booking.startTime), "HH:mm")} - ${format(new Date(booking.endTime), "HH:mm")}`
+                              : format(new Date(booking.startTime), "HH:mm")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-primary">
+                            ₹{(booking.totalPrice / 100).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setCurrentBooking(booking);
+                                setShowInvoice(true);
+                              }}
+                              className="touch-target"
+                              title="Print Invoice"
+                            >
+                              <Printer className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {(!Array.isArray(bookings) || (bookings as any).length === 0) && (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            No recent entries found.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

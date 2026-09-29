@@ -219,7 +219,7 @@ export default function GamesPage() {
       </section>
 
       {/* Filters & Content Section */}
-      <section className="py-6 sm:py-8 px-3 sm:px-4 container mx-auto">
+      <section className="py-6 sm:py-8 pb-28 md:pb-12 px-3 sm:px-4 container mx-auto">
         {/* Filters Bar */}
         <div className="bg-card/40 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 sm:p-5 mb-6 sm:mb-8 space-y-3 sm:space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">

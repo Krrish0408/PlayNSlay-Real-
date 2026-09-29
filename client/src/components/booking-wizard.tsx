@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, addHours, addMinutes, setHours, setMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, ChevronRight, ChevronLeft, ChevronDown, Loader2, CheckCircle2, Clock, AlertCircle, Gamepad2, Monitor, Sparkles, MapPin } from "lucide-react";
+import { CalendarIcon, ChevronRight, ChevronLeft, ChevronDown, Loader2, CheckCircle2, Clock, AlertCircle, Gamepad2, Monitor, Sparkles, MapPin, Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { GameType } from "@shared/schema";
 import { calculateBookingPrice } from "@shared/pricing";
@@ -60,6 +60,19 @@ export function BookingWizard() {
   const [paymentMethod, setPaymentMethod] = useState<"online" | "offline">("offline");
   const [confirmedBooking, setConfirmedBooking] = useState<any | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [copiedRef, setCopiedRef] = useState(false);
+
+  const handleCopyRef = (refText: string) => {
+    try {
+      navigator.clipboard.writeText(refText);
+      setCopiedRef(true);
+      setTimeout(() => setCopiedRef(false), 2000);
+      toast({
+        title: "Copied!",
+        description: `Booking Reference ${refText} copied to clipboard.`,
+      });
+    } catch {}
+  };
 
   const applyWizardDuration = (mins: number, baseStartTime?: string) => {
     setSelectedDurationMins(mins);
@@ -226,13 +239,13 @@ export function BookingWizard() {
   return (
     <div className="w-full max-w-5xl mx-auto px-1 sm:px-4">
       {/* Progress Steps */}
-      <div className="flex justify-center mb-6 sm:mb-8 relative px-2">
+      <div className="flex justify-center mb-6 sm:mb-8 relative px-1">
         <div className="flex items-center gap-1 sm:gap-3 text-xs sm:text-sm font-medium">
           {[1, 2, 3, 4].map((s) => (
             <div key={s} className="flex items-center gap-1 sm:gap-2">
               <div
                 className={cn(
-                  "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border transition-all duration-300 text-xs sm:text-sm shrink-0",
+                  "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border transition-all duration-300 text-xs sm:text-sm shrink-0 font-bold",
                   step === s
                     ? s === 4
                       ? "bg-emerald-500 text-white border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.5)]"
@@ -241,6 +254,7 @@ export function BookingWizard() {
                     ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/50"
                     : "bg-card border-white/10 text-muted-foreground"
                 )}
+                aria-label={`Step ${s}: ${s === 1 ? "Station" : s === 2 ? "Schedule" : s === 3 ? "Review" : "Confirmed"}`}
               >
                 {step > s || (s === 4 && step === 4) ? (
                   <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
@@ -251,12 +265,12 @@ export function BookingWizard() {
               <span
                 className={cn(
                   "text-xs sm:text-sm whitespace-nowrap",
-                  step >= s ? "text-foreground font-semibold" : "text-muted-foreground"
+                  step === s ? "text-foreground font-bold inline" : "text-muted-foreground hidden sm:inline"
                 )}
               >
                 {s === 1 ? "Station" : s === 2 ? "Schedule" : s === 3 ? "Review" : "Confirmed"}
               </span>
-              {s < 4 && <div className="w-3 sm:w-8 h-[1px] bg-white/10 mx-0.5 sm:mx-1" />}
+              {s < 4 && <div className="w-2 sm:w-8 h-[1px] bg-white/10 mx-0.5 sm:mx-1" />}
             </div>
           ))}
         </div>
@@ -635,10 +649,45 @@ export function BookingWizard() {
                 </Select>
               </div>
 
-              <div className="flex justify-between pt-4">
-                <Button variant="outline" onClick={() => setStep(1)} className="border-white/10 hover:bg-white/5">
+              {/* Desktop inline action area */}
+              <div className="hidden sm:flex justify-between items-center pt-4">
+                <Button variant="outline" onClick={() => setStep(1)} className="border-white/10 hover:bg-white/5 h-11 px-4">
                   <ChevronLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase text-muted-foreground block font-semibold">Total Price</span>
+                    <span className="font-display font-bold text-primary text-lg">₹{totalCost.toFixed(2)}</span>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      if (!user) {
+                        toast({
+                          title: "Login Required",
+                          description: "Please sign in or register to complete your reservation.",
+                        });
+                        setLocation(`/auth?redirect=${encodeURIComponent("/#booking-section")}`);
+                        return;
+                      }
+                      setStep(3);
+                    }}
+                    disabled={!date || !startTime || !endTime || durationHours <= 0}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-6 font-bold shadow-[0_0_15px_rgba(0,243,255,0.3)]"
+                  >
+                    Review Booking <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Mobile Sticky Action Bar */}
+              <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-white/15 px-4 py-3 pb-safe shadow-2xl flex items-center justify-between gap-3">
+                <Button variant="outline" onClick={() => setStep(1)} className="h-11 px-3 border-white/10 text-xs font-semibold">
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Back
+                </Button>
+                <div className="text-center px-1">
+                  <span className="text-[10px] uppercase text-muted-foreground block leading-tight font-medium">Estimated</span>
+                  <span className="font-display font-bold text-primary text-base">₹{totalCost.toFixed(2)}</span>
+                </div>
                 <Button
                   onClick={() => {
                     if (!user) {
@@ -652,9 +701,9 @@ export function BookingWizard() {
                     setStep(3);
                   }}
                   disabled={!date || !startTime || !endTime || durationHours <= 0}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-4 font-bold text-xs shadow-[0_0_15px_rgba(0,243,255,0.4)]"
                 >
-                  Review Booking <ChevronRight className="ml-2 h-4 w-4" />
+                  Continue <ChevronRight className="ml-1 w-4 h-4" />
                 </Button>
               </div>
             </div>
@@ -761,14 +810,33 @@ export function BookingWizard() {
                 <div className="space-y-3 pt-4">
                   <Button
                     onClick={handleBook}
-                    className="w-full h-12 text-lg font-bold bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-lg"
+                    className="w-full h-12 text-base sm:text-lg font-bold bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-lg touch-target"
                     disabled={createBooking.isPending}
                   >
                     {createBooking.isPending ? <Loader2 className="animate-spin mr-2" /> : null}
                     {user ? "CONFIRM BOOKING" : "LOGIN TO BOOK"}
                   </Button>
-                  <Button variant="ghost" onClick={() => setStep(2)} className="w-full text-muted-foreground">
+                  <Button variant="ghost" onClick={() => setStep(2)} className="w-full h-11 text-muted-foreground hover:text-foreground">
                     Back to Adjust
+                  </Button>
+                </div>
+
+                {/* Mobile Sticky Action Bar for Step 3 */}
+                <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-white/15 px-4 py-3 pb-safe shadow-2xl flex items-center justify-between gap-3">
+                  <Button variant="outline" onClick={() => setStep(2)} className="h-11 px-3 border-white/10 text-xs font-semibold">
+                    <ChevronLeft className="w-4 h-4 mr-1" /> Adjust
+                  </Button>
+                  <div className="text-center px-1">
+                    <span className="text-[10px] uppercase text-muted-foreground block leading-tight font-medium">Payable</span>
+                    <span className="font-display font-bold text-primary text-base">₹{totalCost.toFixed(2)}</span>
+                  </div>
+                  <Button
+                    onClick={handleBook}
+                    disabled={createBooking.isPending}
+                    className="bg-gradient-to-r from-primary to-secondary text-primary-foreground font-bold h-11 px-4 text-xs shadow-lg"
+                  >
+                    {createBooking.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+                    Confirm Booking
                   </Button>
                 </div>
               </div>
@@ -801,7 +869,7 @@ export function BookingWizard() {
               </div>
 
               {/* Confirmation Details Card */}
-              <div className="p-5 sm:p-7 space-y-5">
+              <div className="p-4 sm:p-7 space-y-4 sm:space-y-5">
                 {/* Booking ID and Reference Badge */}
                 <div className="flex items-center justify-between p-3.5 rounded-xl bg-white/5 border border-white/10">
                   <div>
@@ -809,11 +877,22 @@ export function BookingWizard() {
                     <span className="text-xl font-bold font-mono text-primary">#{confirmedBooking.id}</span>
                   </div>
                   {confirmedBooking.bookingRef && (
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end">
                       <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold block">Reference</span>
-                      <span className="text-xs font-mono font-bold bg-white/10 px-2.5 py-1 rounded-md text-foreground border border-white/10 inline-block mt-0.5">
-                        {confirmedBooking.bookingRef}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyRef(confirmedBooking.bookingRef)}
+                        className="inline-flex items-center gap-1.5 text-xs font-mono font-bold bg-white/10 hover:bg-white/20 active:bg-white/30 px-2.5 py-1.5 rounded-md text-foreground border border-white/10 mt-0.5 transition-colors cursor-pointer"
+                        title="Click to copy booking reference"
+                        aria-label="Copy booking reference"
+                      >
+                        <span>{confirmedBooking.bookingRef}</span>
+                        {copiedRef ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                        )}
+                      </button>
                     </div>
                   )}
                 </div>

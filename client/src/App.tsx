@@ -20,6 +20,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { EmployeeSidebar } from "@/components/employee-sidebar";
 import { Button } from "@/components/ui/button";
 import { Home } from "lucide-react";
+import { MobileBottomNav } from "@/components/responsive/mobile-bottom-nav";
 
 function ProtectedRoute({ component: Component, allowedRoles, ...rest }: any) {
   const { user, isLoading } = useAuth();
@@ -70,7 +71,7 @@ function Router() {
                         </Button>
                       </Link>
                     </div>
-                    <div className="p-6">
+                    <div className="p-3 sm:p-4 md:p-6 pb-20 md:pb-6">
                       <EmployeeDashboard />
                     </div>
                   </main>
@@ -89,8 +90,8 @@ function Router() {
                 <div className="flex h-screen w-full overflow-hidden">
                   <EmployeeSidebar />
                   <main className="flex-1 overflow-auto bg-background">
-                    <div className="p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-10">
-                      <div className="flex items-center gap-4">
+                    <div className="p-3 sm:p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-10">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         <SidebarTrigger />
                         <span className="font-display font-bold tracking-tight">EMPLOYEE <span className="text-primary text-xs ml-2 px-2 py-0.5 rounded border border-primary/20 bg-primary/10 uppercase">Portal</span></span>
                       </div>
@@ -101,7 +102,7 @@ function Router() {
                         </Button>
                       </Link>
                     </div>
-                    <div className="p-6">
+                    <div className="p-3 sm:p-4 md:p-6 pb-20 md:pb-6">
                       <BookingEntryPage />
                     </div>
                   </main>
@@ -120,8 +121,8 @@ function Router() {
                 <div className="flex h-screen w-full overflow-hidden">
                   <EmployeeSidebar />
                   <main className="flex-1 overflow-auto bg-background">
-                    <div className="p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-10">
-                      <div className="flex items-center gap-4">
+                    <div className="p-3 sm:p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-10">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         <SidebarTrigger />
                         <span className="font-display font-bold tracking-tight">EMPLOYEE <span className="text-primary text-xs ml-2 px-2 py-0.5 rounded border border-primary/20 bg-primary/10 uppercase">Portal</span></span>
                       </div>
@@ -132,7 +133,7 @@ function Router() {
                         </Button>
                       </Link>
                     </div>
-                    <div className="p-6">
+                    <div className="p-3 sm:p-4 md:p-6 pb-20 md:pb-6">
                       <EmployeeRecentPage />
                     </div>
                   </main>
@@ -152,6 +153,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Router />
+        <MobileBottomNav />
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

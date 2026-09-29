@@ -20,6 +20,7 @@ import { ImageUpload } from "@/components/image-upload";
 
 
 import { useGames } from "@/hooks/use-games";
+import { StatusBadge } from "@/components/responsive/status-badge";
 import { useStations } from "@/hooks/use-stations";
 import type { StationStatus } from "@shared/schema";
 import { resolveGameCover } from "@/lib/game-images";
@@ -388,8 +389,116 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto w-full">
+              <CardContent className="p-0 sm:p-6 sm:pt-0">
+                {/* Mobile Bookings Card List (< md:) */}
+                <div className="md:hidden divide-y divide-white/5">
+                  {filteredBookings?.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()).map((booking) => (
+                    <div key={booking.id} className="p-4 space-y-3 hover:bg-white/[0.02] transition-colors">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-xs text-primary font-bold">{booking.bookingRef}</span>
+                        <StatusBadge status={booking.status} />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] uppercase text-muted-foreground block font-semibold">User</span>
+                          <span className="font-semibold text-sm text-foreground">{booking.user?.username || 'Unknown'}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] uppercase text-muted-foreground block font-semibold">Payment</span>
+                          <span className="capitalize text-xs font-medium text-foreground bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                            {booking.paymentMethod}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground pt-2 border-t border-white/5">
+                        <div>
+                          <span className="text-[10px] uppercase text-muted-foreground block font-semibold">Game / Station</span>
+                          <span className="text-foreground">{booking.gameType?.name || 'Unknown'}</span>
+                          {booking.station?.name && (
+                            <Badge variant="outline" className="border-cyan-500/40 text-cyan-400 bg-cyan-950/20 font-mono text-[10px] ml-1">
+                              {booking.station.name}
+                            </Badge>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase text-muted-foreground block font-semibold">Session Window</span>
+                          <span className="font-mono text-foreground">
+                            {format(new Date(booking.startTime), "HH:mm")} - {format(new Date(booking.endTime), "HH:mm")}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Timer & Actions */}
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 gap-2 flex-wrap">
+                        <div>
+                          {getTimerDisplay(booking)}
+                        </div>
+                        <div className="flex items-center gap-2 ml-auto">
+                          {booking.status === 'Pending' && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-9 px-3 text-xs border-green-500/40 text-green-400 hover:bg-green-500/10 font-bold touch-target"
+                                onClick={() => updateBookingStatus.mutate({ id: booking.id, status: "Approved" })}
+                              >
+                                <Check className="w-3.5 h-3.5 mr-1" /> Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-9 px-3 text-xs border-red-500/40 text-red-400 hover:bg-red-500/10 font-bold touch-target"
+                                onClick={() => updateBookingStatus.mutate({ id: booking.id, status: "Cancelled" })}
+                              >
+                                <X className="w-3.5 h-3.5 mr-1" /> Cancel
+                              </Button>
+                            </>
+                          )}
+                          {booking.status === 'Approved' && !booking.timerStartedAt && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-9 px-3 text-xs border-primary/50 text-primary hover:bg-primary/10 font-bold touch-target"
+                              onClick={() => (startTimer as any).mutate(booking.id)}
+                            >
+                              Start Timer
+                            </Button>
+                          )}
+                          {booking.timerStartedAt && booking.status !== 'Completed' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-9 px-3 text-xs border-red-500/50 text-red-400 hover:bg-red-500/10 font-bold touch-target"
+                              onClick={() => (stopTimer as any).mutate(booking.id)}
+                            >
+                              Stop Timer
+                            </Button>
+                          )}
+                          {booking.status === 'Approved' && !booking.timerStartedAt && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-9 px-2.5 text-xs text-blue-400 hover:bg-blue-400/10 touch-target"
+                              onClick={() => updateBookingStatus.mutate({ id: booking.id, status: "Completed" })}
+                            >
+                              <Check className="w-4 h-4 mr-1" /> Complete
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!filteredBookings || filteredBookings.length === 0) && (
+                    <div className="text-center py-8 text-muted-foreground text-xs italic">
+                      No bookings found matching filters.
+                    </div>
+                  )}
+                </div>
+
+                {/* Desktop Table View (md: and up) */}
+                <div className="hidden md:block overflow-x-auto w-full">
                   <Table>
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-white/5">
@@ -428,14 +537,7 @@ export default function AdminDashboard() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={
-                            booking.status === 'Pending' ? "text-yellow-400 border-yellow-500/50" :
-                              booking.status === 'Approved' ? "text-green-400 border-green-500/50" :
-                                booking.status === 'Cancelled' ? "text-red-400 border-red-500/50" :
-                                  "text-blue-400 border-blue-500/50"
-                          }>
-                            {booking.status}
-                          </Badge>
+                          <StatusBadge status={booking.status} />
                         </TableCell>
                         <TableCell>
                           {getTimerDisplay(booking)}
@@ -505,7 +607,7 @@ export default function AdminDashboard() {
                           <Plus className="mr-2 h-4 w-4" /> Add Station
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="bg-card border-white/10 sm:max-w-md">
+                      <DialogContent className="bg-card border-white/10 w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                         <DialogHeader>
                           <DialogTitle className="flex items-center gap-2">
                             <Monitor className="w-5 h-5 text-primary" />
@@ -588,8 +690,108 @@ export default function AdminDashboard() {
                 </div>
               </CardHeader>
 
-              <CardContent>
-                <div className="overflow-x-auto w-full">
+              <CardContent className="p-0 sm:p-6 sm:pt-0">
+                {/* Mobile Stations Card List (< md:) */}
+                <div className="md:hidden divide-y divide-white/5">
+                  {filteredStations?.map((station) => {
+                    const category = gameTypes?.find(g => g.id === station.gameTypeId);
+                    return (
+                      <div key={station.id} className="p-4 space-y-3 hover:bg-white/[0.02] transition-colors">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-sm text-cyan-400">{station.name}</span>
+                            <span className="font-mono text-[11px] text-muted-foreground">#{station.id}</span>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={
+                              station.status === 'AVAILABLE'
+                                ? "text-green-400 border-green-500/50 bg-green-500/10 text-xs"
+                                : station.status === 'MAINTENANCE'
+                                ? "text-yellow-400 border-yellow-500/50 bg-yellow-500/10 text-xs"
+                                : "text-red-400 border-red-500/50 bg-red-500/10 text-xs"
+                            }
+                          >
+                            {station.status}
+                          </Badge>
+                        </div>
+
+                        <div className="text-xs text-muted-foreground">
+                          Category: <span className="font-semibold text-foreground">{category?.name || `Category #${station.gameTypeId}`}</span>
+                        </div>
+
+                        {/* Status Change Buttons */}
+                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/5 flex-wrap">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Button
+                              size="sm"
+                              variant={station.status === 'AVAILABLE' ? "default" : "outline"}
+                              className={`h-8 text-xs px-2.5 touch-target ${
+                                station.status === 'AVAILABLE'
+                                  ? "bg-green-600 hover:bg-green-500 text-white font-bold"
+                                  : "border-green-500/30 text-green-400 hover:bg-green-500/10"
+                              }`}
+                              onClick={() => updateStationStatus.mutate({ id: station.id, status: 'AVAILABLE' })}
+                              disabled={updateStationStatus.isPending || station.status === 'AVAILABLE'}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Avail
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant={station.status === 'MAINTENANCE' ? "default" : "outline"}
+                              className={`h-8 text-xs px-2.5 touch-target ${
+                                station.status === 'MAINTENANCE'
+                                  ? "bg-yellow-600 hover:bg-yellow-500 text-white font-bold"
+                                  : "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10"
+                              }`}
+                              onClick={() => updateStationStatus.mutate({ id: station.id, status: 'MAINTENANCE' })}
+                              disabled={updateStationStatus.isPending || station.status === 'MAINTENANCE'}
+                            >
+                              <Wrench className="w-3.5 h-3.5 mr-1" /> Maint
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant={station.status === 'INACTIVE' ? "default" : "outline"}
+                              className={`h-8 text-xs px-2.5 touch-target ${
+                                station.status === 'INACTIVE'
+                                  ? "bg-red-600 hover:bg-red-500 text-white font-bold"
+                                  : "border-red-500/30 text-red-400 hover:bg-red-500/10"
+                              }`}
+                              onClick={() => updateStationStatus.mutate({ id: station.id, status: 'INACTIVE' })}
+                              disabled={updateStationStatus.isPending || station.status === 'INACTIVE'}
+                            >
+                              <Power className="w-3.5 h-3.5 mr-1" /> Off
+                            </Button>
+                          </div>
+
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-400/10 ml-auto touch-target"
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete station ${station.name}?`)) {
+                                deleteStation.mutate(station.id);
+                              }
+                            }}
+                            title="Delete Station"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {(!filteredStations || filteredStations.length === 0) && (
+                    <div className="text-center py-8 text-muted-foreground text-xs italic">
+                      No physical stations found. Click "Add Station" to register physical hardware.
+                    </div>
+                  )}
+                </div>
+
+                {/* Desktop Table View (md: and up) */}
+                <div className="hidden md:block overflow-x-auto w-full">
                   <Table>
                     <TableHeader>
                       <TableRow className="border-white/10 hover:bg-white/5">
@@ -716,7 +918,7 @@ export default function AdminDashboard() {
                     <Plus className="mr-2 h-4 w-4" /> Add Station Type
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-card border-white/10">
+                <DialogContent className="bg-card border-white/10 w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                   <DialogHeader>
                     <DialogTitle>New Game Station</DialogTitle>
                   </DialogHeader>
@@ -796,7 +998,7 @@ export default function AdminDashboard() {
               ))}
 
               <Dialog open={isEditGameDialogOpen} onOpenChange={setIsEditGameDialogOpen}>
-                <DialogContent className="bg-card border-white/10">
+                <DialogContent className="bg-card border-white/10 w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                   <DialogHeader>
                     <DialogTitle>Edit Game Station</DialogTitle>
                   </DialogHeader>
@@ -856,7 +1058,7 @@ export default function AdminDashboard() {
                       <Plus className="mr-2 h-4 w-4" /> Add Game Title
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="bg-card border-white/10 max-w-lg">
+                  <DialogContent className="bg-card border-white/10 w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                     <DialogHeader>
                       <DialogTitle>Add Game to Catalog</DialogTitle>
                     </DialogHeader>
@@ -1012,7 +1214,7 @@ export default function AdminDashboard() {
 
             {/* Edit Catalog Game Dialog */}
             <Dialog open={isEditCatalogDialogOpen} onOpenChange={setIsEditCatalogDialogOpen}>
-              <DialogContent className="bg-card border-white/10 max-w-lg">
+              <DialogContent className="bg-card border-white/10 w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                 <DialogHeader>
                   <DialogTitle>Edit Catalog Game</DialogTitle>
                 </DialogHeader>
@@ -1140,7 +1342,7 @@ export default function AdminDashboard() {
 
             {/* Force Password Reset Modal */}
             <Dialog open={!!resetPasswordUser} onOpenChange={(open) => !open && setResetPasswordUser(null)}>
-              <DialogContent className="bg-card border-white/10 sm:max-w-md">
+              <DialogContent className="bg-card border-white/10 w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <KeyRound className="w-5 h-5 text-primary" />
