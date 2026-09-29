@@ -56,6 +56,7 @@ export const DEFAULT_PROD_ORIGINS = [
   "https://gaminglounge.com",
   "https://app.gaminglounge.com",
   "https://admin.gaminglounge.com",
+  "https://playnslay.onrender.com",
 ];
 
 export const REQUIRED_CORS_METHODS = [
