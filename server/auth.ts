@@ -2,7 +2,7 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { scrypt, randomBytes, timingSafeEqual, createHmac } from "crypto";
 import { promisify } from "util";
 import rateLimit from "express-rate-limit";
 import argon2 from "argon2";
@@ -1324,6 +1324,54 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // Google OAuth Helper Utilities
+  function getGoogleRedirectUri(req: any): string {
+    if (config.google.callbackUrl) {
+      return config.google.callbackUrl;
+    }
+    const host = req.get("host") || "localhost:5001";
+    const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+    const forwardedProto = (req.headers["x-forwarded-proto"] as string)?.split(",")[0]?.trim();
+    const proto = forwardedProto || req.protocol;
+    // Cloud and production environments behind reverse proxies must always use HTTPS for Google redirect_uri
+    const effectiveProto = isLocal ? proto : "https";
+    return `${effectiveProto}://${host}/api/auth/google/callback`;
+  }
+
+  interface OAuthStatePayload {
+    s: string;
+    n?: string;
+    t: number;
+  }
+
+  function signOAuthState(payload: OAuthStatePayload, secret: string): string {
+    const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
+    const sig = createHmac("sha256", secret).update(data).digest("base64url");
+    return `${data}.${sig}`;
+  }
+
+  function verifyOAuthState(stateStr: string, secret: string): OAuthStatePayload | null {
+    try {
+      if (!stateStr || typeof stateStr !== "string") return null;
+      const parts = stateStr.split(".");
+      if (parts.length !== 2) return null;
+      const [data, sig] = parts;
+      const expectedSig = createHmac("sha256", secret).update(data).digest("base64url");
+      const sigBuf = Buffer.from(sig);
+      const expBuf = Buffer.from(expectedSig);
+      if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) {
+        return null;
+      }
+      const payload: OAuthStatePayload = JSON.parse(Buffer.from(data, "base64url").toString("utf8"));
+      if (!payload.t || Date.now() - payload.t > 15 * 60 * 1000) {
+        return null;
+      }
+      return payload;
+    } catch {
+      return null;
+    }
+  }
+
   // Google OAuth Config Endpoint (Safe, non-secret public metadata for client-side Google SDK)
   app.get("/api/auth/google/config", (_req, res) => {
     res.json({
@@ -1335,34 +1383,41 @@ export function setupAuth(app: Express) {
   // Initiate Google OAuth Redirect Flow
   app.get("/api/auth/google", (req, res) => {
     if (!config.google.clientId) {
-      if (req.accepts("html")) {
-        return res.redirect("/auth?error=google_not_configured");
+      if (req.headers["accept"]?.includes("application/json") || !req.accepts("html")) {
+        return res.status(503).json({
+          message: "Google OAuth is not configured on this server.",
+          code: "GOOGLE_NOT_CONFIGURED",
+        });
       }
-      return res.status(503).json({
-        message: "Google OAuth is not configured on this server.",
-        code: "GOOGLE_NOT_CONFIGURED",
-      });
+      return res.redirect("/auth?error=google_not_configured");
     }
 
-    const state = randomBytes(16).toString("hex");
+    const stateRandom = randomBytes(16).toString("hex");
     const nonce = randomBytes(16).toString("hex");
-    (req.session as any).oauthState = state;
+    const signedState = signOAuthState({ s: stateRandom, n: nonce, t: Date.now() }, config.sessionSecret);
+
+    (req.session as any).oauthState = signedState;
     (req.session as any).oauthNonce = nonce;
 
-    const redirectUri =
-      config.google.callbackUrl || `${req.protocol}://${req.get("host")}/api/auth/google/callback`;
+    const redirectUri = getGoogleRedirectUri(req);
 
     const params = new URLSearchParams({
       client_id: config.google.clientId,
       redirect_uri: redirectUri,
       response_type: "code",
       scope: "openid email profile",
-      state,
+      state: signedState,
       nonce,
       prompt: "select_account",
     });
 
-    res.redirect(`${GOOGLE_AUTH_URL}?${params.toString()}`);
+    // Explicitly persist session before redirecting to avoid cross-domain race conditions
+    req.session.save((err) => {
+      if (err) {
+        console.error("[GOOGLE OAUTH] Failed to persist session before redirect:", err);
+      }
+      res.redirect(`${GOOGLE_AUTH_URL}?${params.toString()}`);
+    });
   });
 
   // Handle Google OAuth Redirect Callback
@@ -1375,14 +1430,20 @@ export function setupAuth(app: Express) {
         return res.redirect(`/auth?error=${encodeURIComponent(String(error))}`);
       }
 
-      // Validate CSRF state
-      const expectedState = (req.session as any).oauthState;
-      delete (req.session as any).oauthState;
+      // Validate CSRF state (dual-layer: session state + cryptographically signed state token)
+      const stateStr = typeof state === "string" ? state : "";
+      const verifiedState = verifyOAuthState(stateStr, config.sessionSecret);
+      const sessionState = (req.session as any)?.oauthState;
+      const sessionNonce = (req.session as any)?.oauthNonce;
 
-      const expectedNonce = (req.session as any).oauthNonce;
-      delete (req.session as any).oauthNonce;
+      delete (req.session as any)?.oauthState;
+      delete (req.session as any)?.oauthNonce;
 
-      if (!state || state !== expectedState) {
+      const isStateValid = Boolean(
+        (sessionState && stateStr === sessionState) || (verifiedState && verifiedState.s)
+      );
+
+      if (!stateStr || !isStateValid) {
         return res.redirect("/auth?error=invalid_state");
       }
 
@@ -1390,8 +1451,8 @@ export function setupAuth(app: Express) {
         return res.redirect("/auth?error=missing_code");
       }
 
-      const redirectUri =
-        config.google.callbackUrl || `${req.protocol}://${req.get("host")}/api/auth/google/callback`;
+      const redirectUri = getGoogleRedirectUri(req);
+      const expectedNonce = sessionNonce || verifiedState?.n;
 
       const profile = await exchangeGoogleAuthCode(code, redirectUri, expectedNonce);
       const { user } = await handleGoogleUser(profile);
@@ -1399,7 +1460,9 @@ export function setupAuth(app: Express) {
       // Session fixation defense: regenerate session ID on successful OAuth login
       await regenerateSession(req);
       if (req.session) {
-        (req.session as any).csrfToken = generateCsrfToken();
+        const csrfToken = generateCsrfToken();
+        (req.session as any).csrfToken = csrfToken;
+        setCsrfCookie(res, csrfToken, config.isProduction || config.isStaging);
       }
 
       req.login(user, async (err) => {
@@ -1461,10 +1524,7 @@ export function setupAuth(app: Express) {
       if (token && typeof token === "string") {
         profile = await verifyGoogleIdToken(token, nonce);
       } else if (code && typeof code === "string") {
-        const cbUrl =
-          redirectUri ||
-          config.google.callbackUrl ||
-          `${req.protocol}://${req.get("host")}/api/auth/google/callback`;
+        const cbUrl = redirectUri || getGoogleRedirectUri(req);
         profile = await exchangeGoogleAuthCode(code, cbUrl, nonce);
       } else {
         return res.status(400).json({
